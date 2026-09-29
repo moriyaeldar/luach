@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: gateway
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: task-service
+              uri: ${TASK_SERVICE_URL:http://localhost:8081}
+              predicates:
+                - Path=/api/tasks/**,/api/tasks,/api/week,/api/recurrence/**,/api/members
+          default-filters:
+            - DedupeResponseHeader=Access-Control-Allow-Origin
+
+server:
+  port: ${PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway

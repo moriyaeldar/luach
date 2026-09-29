@@ -1,0 +1,62 @@
+<div class="week">
+  @for (day of days(); track day.info.date) {
+    <section class="day" [class.rest]="day.info.restDay" [class.today]="day.info.date === today()">
+      <header class="day-header">
+        <div class="weekday">
+          <span class="name">{{ i18n.weekday(day.info.date) }}</span>
+          <span class="gregorian">{{ i18n.shortDate(day.info.date) }}</span>
+        </div>
+        <div class="hebrew-date">{{ i18n.pick(day.info.hebrewDate) }}</div>
+        @if (day.info.holidays.length || day.info.parasha) {
+          <div class="tags">
+            @for (holiday of day.info.holidays; track holiday.en) {
+              <span class="tag holiday">{{ i18n.pick(holiday) }}</span>
+            }
+            @if (day.info.parasha) {
+              <span class="tag parasha">{{ i18n.t('parasha') }} {{ i18n.pick(day.info.parasha) }}</span>
+            }
+          </div>
+        }
+        <button mat-icon-button class="add" (click)="addOnDay.emit(day.info.date)"
+                [attr.aria-label]="i18n.t('newTask')" [matTooltip]="i18n.t('newTask')">
+          <mat-icon>add</mat-icon>
+        </button>
+      </header>
+
+      <div class="block">
+        <h3>{{ i18n.t('dayTasks') }}</h3>
+        @for (task of day.dayTasks; track task.taskId + task.date) {
+          <div class="item day-item" [class.done]="task.done" [style.--member]="member(task.assigneeId)?.color">
+            <mat-checkbox [checked]="task.done" (change)="toggleDone.emit(task)"
+                          [attr.aria-label]="i18n.t('markDone') + ': ' + task.title" />
+            <button class="item-body" (click)="openTask.emit(task.taskId)">
+              <span class="title">{{ task.title }}</span>
+              <span class="meta">
+                <span class="dot"></span>{{ memberName(task.assigneeId) }}
+                @if (task.recurring) {
+                  <mat-icon class="repeat" [matTooltip]="i18n.t('recurring')">repeat</mat-icon>
+                }
+              </span>
+            </button>
+          </div>
+        } @empty {
+          <p class="empty">{{ i18n.t('nothingPlanned') }}</p>
+        }
+      </div>
+
+      <div class="block">
+        <h3>{{ i18n.t('timedTasks') }}</h3>
+        @for (task of day.timedTasks; track task.taskId + task.date) {
+          <button class="item timed-item" [class.done]="task.done" [style.--member]="member(task.assigneeId)?.color"
+                  (click)="openTask.emit(task.taskId)">
+            <span class="time" dir="ltr">{{ timeRange(task) }}</span>
+            <span class="title">{{ task.title }}</span>
+            <span class="meta"><span class="dot"></span>{{ memberName(task.assigneeId) }}</span>
+          </button>
+        } @empty {
+          <p class="empty">—</p>
+        }
+      </div>
+    </section>
+  }
+</div>

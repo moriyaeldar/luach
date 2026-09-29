@@ -1,0 +1,32 @@
+@use '@angular/material' as mat;
+
+html {
+  color-scheme: light dark;
+
+  @include mat.theme(
+    (
+      color: mat.$violet-palette,
+      typography: (plain-family: 'Rubik, system-ui, sans-serif', brand-family: 'Rubik, system-ui, sans-serif'),
+      density: 0,
+    )
+  );
+
+  --luach-background: light-dark(#f6f5fb, #121218);
+  --luach-surface: light-dark(#ffffff, #1c1b22);
+  --luach-item: light-dark(#f7f6fc, #25242d);
+  --luach-rest: light-dark(#f3effd, #221f2e);
+  --luach-border: light-dark(#e4e1ee, #34323d);
+  --luach-muted: light-dark(#6b6878, #a19eae);
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: Rubik, system-ui, sans-serif;
+  background: var(--luach-background);
+  color: var(--mat-sys-on-surface);
+}

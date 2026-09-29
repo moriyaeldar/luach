@@ -1,0 +1,207 @@
+<h2 mat-dialog-title>{{ isEdit() ? i18n.t('editTask') : i18n.t('newTask') }}</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" (ngSubmit)="save()" id="task-form" class="form">
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>{{ i18n.t('title') }}</mat-label>
+      <input matInput formControlName="title" cdkFocusInitial autocomplete="off" />
+      @if (form.controls.title.hasError('required')) {
+        <mat-error>{{ i18n.t('required') }}</mat-error>
+      }
+    </mat-form-field>
+
+    <div class="row">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ i18n.t('assignee') }}</mat-label>
+        <mat-select formControlName="assigneeId">
+          @for (m of data.members; track m.id) {
+            <mat-option [value]="m.id">
+              <span class="member-dot" [style.background]="m.color"></span>{{ i18n.pick(m) }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ i18n.t('importance') }}</mat-label>
+        <mat-select formControlName="importance">
+          @for (n of [1, 2, 3, 4, 5]; track n) {
+            <mat-option [value]="n">{{ n }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="mode">
+      <span class="label">{{ i18n.t('kind') }}</span>
+      <mat-button-toggle-group formControlName="scheduleMode" [attr.aria-label]="i18n.t('kind')">
+        @for (m of modes; track m.value) {
+          <mat-button-toggle [value]="m.value">{{ i18n.t(m.label) }}</mat-button-toggle>
+        }
+      </mat-button-toggle-group>
+      @for (m of modes; track m.value) {
+        @if (m.value === mode()) {
+          <p class="hint">{{ i18n.t(m.hint) }}</p>
+        }
+      }
+    </div>
+
+    <div class="row">
+      @if (mode() !== 'AUTO') {
+        <mat-form-field appearance="outline">
+          <mat-label>{{ kind() === 'NONE' ? i18n.t('date') : i18n.t('firstDate') }}</mat-label>
+          <input matInput type="date" formControlName="date" required />
+        </mat-form-field>
+      }
+      @if (mode() === 'FIXED') {
+        <mat-form-field appearance="outline">
+          <mat-label>{{ i18n.t('startTime') }}</mat-label>
+          <input matInput type="time" formControlName="startTime" required />
+        </mat-form-field>
+      }
+      @if (mode() !== 'DAY') {
+        <mat-form-field appearance="outline">
+          <mat-label>{{ i18n.t('duration') }}</mat-label>
+          <input matInput type="number" min="5" step="5" formControlName="durationMinutes" required />
+        </mat-form-field>
+      }
+      @if (mode() === 'AUTO') {
+        <mat-form-field appearance="outline">
+          <mat-label>{{ i18n.t('deadlineField') }}</mat-label>
+          <input matInput type="date" formControlName="deadline" required />
+        </mat-form-field>
+      }
+    </div>
+
+    @if (mode() !== 'AUTO') {
+      <fieldset formGroupName="recurrence" class="recurrence">
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>{{ i18n.t('repeat') }}</mat-label>
+          <mat-select formControlName="kind">
+            @for (k of kinds; track k.value) {
+              <mat-option [value]="k.value">{{ i18n.t(k.label) }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        @switch (kind()) {
+          @case ('HEBREW_YEARLY') {
+            <div class="row">
+              <mat-form-field appearance="outline">
+                <mat-label>{{ i18n.t('hebrewDay') }}</mat-label>
+                <mat-select formControlName="hebrewDay">
+                  @for (d of hebrewDays; track d) {
+                    <mat-option [value]="d">{{ d }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ i18n.t('hebrewMonth') }}</mat-label>
+                <mat-select formControlName="hebrewMonth">
+                  @for (m of months; track m.value) {
+                    <mat-option [value]="m.value">{{ i18n.pick(m.name) }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            </div>
+            @if (form.controls.recurrence.controls.hebrewMonth.value === 'ADAR') {
+              <mat-form-field appearance="outline" class="full">
+                <mat-label>{{ i18n.t('leapYearPolicy') }}</mat-label>
+                <mat-select formControlName="leapYearPolicy">
+                  <mat-option value="ADAR_II">{{ i18n.t('leapAdarII') }}</mat-option>
+                  <mat-option value="ADAR_I">{{ i18n.t('leapAdarI') }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+            }
+            @if (form.controls.recurrence.controls.hebrewDay.value === 30) {
+              <ng-container *ngTemplateOutlet="missingDay" />
+            }
+          }
+          @case ('HEBREW_MONTHLY') {
+            <mat-form-field appearance="outline">
+              <mat-label>{{ i18n.t('hebrewDay') }}</mat-label>
+              <mat-select formControlName="hebrewDay">
+                @for (d of hebrewDays; track d) {
+                  <mat-option [value]="d">{{ d }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            @if (form.controls.recurrence.controls.hebrewDay.value === 30) {
+              <ng-container *ngTemplateOutlet="missingDay" />
+            }
+          }
+          @case ('WEEKLY') {
+            <mat-form-field appearance="outline" class="full">
+              <mat-label>{{ i18n.t('weekDays') }}</mat-label>
+              <mat-select formControlName="weekDays" multiple>
+                @for (d of weekDays; track d) {
+                  <mat-option [value]="d">{{ dayName(d) }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          }
+          @case ('GREGORIAN_MONTHLY') {
+            <mat-form-field appearance="outline">
+              <mat-label>{{ i18n.t('monthDay') }}</mat-label>
+              <input matInput type="number" min="1" max="31" formControlName="monthDay" />
+            </mat-form-field>
+          }
+        }
+
+        @if (kind() !== 'NONE') {
+          <mat-form-field appearance="outline">
+            <mat-label>{{ i18n.t('until') }}</mat-label>
+            <input matInput type="date" formControlName="until" />
+          </mat-form-field>
+
+          <section class="preview" aria-live="polite">
+            <h3>{{ i18n.t('preview') }}</h3>
+            @if (preview(); as items) {
+              <ul>
+                @for (item of items; track item.date) {
+                  <li>
+                    <span>{{ previewDate(item.date) }}</span>
+                    <span class="hebrew">{{ i18n.pick(item.hebrewDate) }}</span>
+                  </li>
+                } @empty {
+                  <li class="muted">{{ i18n.t('previewEmpty') }}</li>
+                }
+              </ul>
+            }
+          </section>
+        }
+
+        <ng-template #missingDay>
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>{{ i18n.t('missingDayPolicy') }}</mat-label>
+            <mat-select formControlName="missingDayPolicy">
+              <mat-option value="NEXT_DAY">{{ i18n.t('missingNextDay') }}</mat-option>
+              <mat-option value="LAST_DAY">{{ i18n.t('missingLastDay') }}</mat-option>
+              <mat-option value="SKIP">{{ i18n.t('missingSkip') }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </ng-template>
+      </fieldset>
+    }
+
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>{{ i18n.t('notes') }}</mat-label>
+      <textarea matInput formControlName="notes" rows="2"></textarea>
+    </mat-form-field>
+
+    @if (error(); as message) {
+      <p class="error" role="alert">{{ message }}</p>
+    }
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions>
+  @if (isEdit()) {
+    <button mat-button class="delete" type="button" (click)="remove()" [disabled]="saving()">
+      <mat-icon>delete</mat-icon>{{ i18n.t('delete') }}
+    </button>
+  }
+  <span class="spacer"></span>
+  <button mat-button mat-dialog-close type="button">{{ i18n.t('cancel') }}</button>
+  <button mat-flat-button type="submit" form="task-form" [disabled]="saving()">{{ i18n.t('save') }}</button>
+</mat-dialog-actions>

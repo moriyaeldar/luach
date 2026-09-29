@@ -1,0 +1,52 @@
+# Runs the whole system locally: docker compose up --build  ->  http://localhost:8000
+name: luach
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      TASKS_DB_PASSWORD: ${TASKS_DB_PASSWORD:-tasks}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./deploy/postgres/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      retries: 10
+
+  task-service:
+    build:
+      context: .
+      dockerfile: deploy/java-service.Dockerfile
+      args:
+        MODULE: services/task-service
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/tasks_db
+      DB_USER: tasks
+      DB_PASSWORD: ${TASKS_DB_PASSWORD:-tasks}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  gateway:
+    build:
+      context: .
+      dockerfile: deploy/java-service.Dockerfile
+      args:
+        MODULE: services/gateway
+    environment:
+      TASK_SERVICE_URL: http://task-service:8081
+    depends_on:
+      - task-service
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8000:80"
+    depends_on:
+      - gateway
+
+volumes:
+  postgres-data:
