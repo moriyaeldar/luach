@@ -89,6 +89,14 @@ docker compose up --build
 # open http://localhost:8000
 ```
 
+**On a server** (one command on a fresh Ubuntu machine, e.g. Oracle Cloud Always Free):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/moriyaeldar/luach/main/deploy/setup-server.sh | bash
+```
+
+It installs Docker, opens ports 80/443, writes `.env` with random database passwords, and starts everything behind Caddy with an automatic HTTPS certificate (a free `<ip>.sslip.io` address unless `DOMAIN` is set). After that, every green CI run on `main` redeploys over SSH (`.github/workflows/deploy.yml`).
+
 **For development:**
 
 ```bash

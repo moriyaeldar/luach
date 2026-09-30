@@ -1,0 +1,33 @@
+# Production overrides, used together with docker-compose.yml:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+# Caddy terminates HTTPS (automatic Let's Encrypt certificate for $DOMAIN) and is the only public entry point.
+services:
+  postgres:
+    restart: unless-stopped
+  task-service:
+    restart: unless-stopped
+    environment:
+      JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=60
+  gateway:
+    restart: unless-stopped
+  frontend:
+    restart: unless-stopped
+    ports: !reset []
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:?DOMAIN is required, e.g. 1-2-3-4.sslip.io}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - frontend
+
+volumes:
+  caddy-data:
+  caddy-config:
