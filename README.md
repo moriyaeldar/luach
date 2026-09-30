@@ -7,6 +7,8 @@ Built as **Java 21 / Spring Boot microservices** behind an API Gateway, with an 
 
 [![CI](https://github.com/moriyaeldar/luach/actions/workflows/ci.yml/badge.svg)](https://github.com/moriyaeldar/luach/actions/workflows/ci.yml)
 
+**Live demo: [luach-moriya.onrender.com](https://luach-moriya.onrender.com)** (free hosting: the first load after a quiet period can take about a minute)
+
 <p>
   <img src="docs/screenshots/week-he.png" alt="Weekly view in Hebrew: Hebrew and Gregorian dates, Sukkot, day tasks and timed tasks" width="100%">
 </p>
