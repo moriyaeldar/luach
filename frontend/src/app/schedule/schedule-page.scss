@@ -1,0 +1,130 @@
+:host {
+  display: block;
+}
+
+.week-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+  margin-bottom: 12px;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Arrows point the way the page reads: in Hebrew "previous" points right. */
+:host-context([dir='rtl']) .flip {
+  transform: scaleX(-1);
+}
+
+.range {
+  display: flex;
+  flex-direction: column;
+
+  .gregorian {
+    font-weight: 600;
+  }
+
+  .hebrew {
+    font-size: 13px;
+    color: var(--luach-muted);
+  }
+}
+
+.members {
+  margin-inline-start: auto;
+}
+
+.chip-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-inline-end: 6px;
+}
+
+.error {
+  color: var(--mat-sys-error);
+}
+
+.unscheduled {
+  margin-top: 20px;
+  background: var(--luach-surface);
+  border: 1px solid var(--luach-border);
+  border-radius: 12px;
+  padding: 16px;
+
+  h2 {
+    margin: 0;
+    font-size: 16px;
+  }
+
+  .hint {
+    margin: 4px 0 12px;
+    font-size: 13px;
+    color: var(--luach-muted);
+  }
+
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  button {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border: 0;
+    border-inline-start: 4px solid var(--member, var(--luach-border));
+    border-radius: 8px;
+    background: var(--luach-item);
+    padding: 8px 12px;
+    font: inherit;
+    color: inherit;
+    text-align: start;
+    cursor: pointer;
+  }
+
+  .title {
+    font-size: 14px;
+  }
+
+  .meta {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--luach-muted);
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--member, var(--luach-muted));
+  }
+}
+
+.demo-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--mat-sys-tertiary-container);
+  color: var(--mat-sys-on-tertiary-container);
+  font-size: 14px;
+}
+
+.new-task {
+  flex-shrink: 0;
+}

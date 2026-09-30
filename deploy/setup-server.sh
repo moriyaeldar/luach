@@ -41,6 +41,8 @@ if [ ! -f .env ]; then
 DOMAIN=${DOMAIN:-${public_ip//./-}.sslip.io}
 POSTGRES_PASSWORD=$(openssl rand -hex 16)
 TASKS_DB_PASSWORD=$(openssl rand -hex 16)
+HOUSEHOLDS_DB_PASSWORD=$(openssl rand -hex 16)
+JWT_SECRET=$(openssl rand -base64 48 | tr -d '\n')
 ENV
   chmod 600 .env
 fi
@@ -50,3 +52,4 @@ sudo docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --bui
 
 echo
 echo "Luach is starting at: https://$(grep '^DOMAIN=' .env | cut -d= -f2)"
+echo "For Google sign-in, add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to .env and run the compose command again."

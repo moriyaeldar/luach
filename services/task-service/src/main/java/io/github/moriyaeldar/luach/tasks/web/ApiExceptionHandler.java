@@ -1,5 +1,6 @@
 package io.github.moriyaeldar.luach.tasks.web;
 
+import io.github.moriyaeldar.luach.tasks.household.HouseholdAccess;
 import io.github.moriyaeldar.luach.tasks.service.InvalidTaskException;
 import io.github.moriyaeldar.luach.tasks.service.TaskNotFoundException;
 import org.springframework.http.HttpStatus;
@@ -20,6 +21,16 @@ public class ApiExceptionHandler {
     @ExceptionHandler(InvalidTaskException.class)
     ProblemDetail invalid(InvalidTaskException e) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
+    }
+
+    @ExceptionHandler(HouseholdAccess.ForbiddenException.class)
+    ProblemDetail forbidden(HouseholdAccess.ForbiddenException e) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, e.getMessage());
+    }
+
+    @ExceptionHandler(org.springframework.web.bind.MissingRequestHeaderException.class)
+    ProblemDetail missingHeader(org.springframework.web.bind.MissingRequestHeaderException e) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Missing header " + e.getHeaderName());
     }
 
     @ExceptionHandler(ObjectOptimisticLockingFailureException.class)

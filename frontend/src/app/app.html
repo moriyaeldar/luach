@@ -6,76 +6,51 @@
       <span class="tagline">{{ i18n.t('tagline') }}</span>
     </div>
   </div>
+
+  @if (session.household(); as household) {
+    @if (session.households().length > 1) {
+      <button mat-button class="family" [matMenuTriggerFor]="families" [matTooltip]="i18n.t('switchFamily')">
+        {{ household.name }}<mat-icon iconPositionEnd>expand_more</mat-icon>
+      </button>
+      <mat-menu #families="matMenu">
+        @for (h of session.households(); track h.id) {
+          <button mat-menu-item (click)="session.select(h.id)">{{ h.name }}</button>
+        }
+      </mat-menu>
+    } @else {
+      <span class="family-name">{{ household.name }}</span>
+    }
+  }
+
   <span class="spacer"></span>
-  <button mat-button (click)="i18n.toggle()" class="lang" [attr.lang]="i18n.lang() === 'he' ? 'en' : 'he'">
-    <mat-icon>translate</mat-icon>{{ i18n.t('switchLanguage') }}
+
+  @if (session.household()) {
+    <button mat-button (click)="openFamily()" [attr.aria-label]="i18n.t('family')">
+      <mat-icon>groups</mat-icon><span class="label">{{ i18n.t('family') }}</span>
+    </button>
+  }
+  <button mat-button (click)="i18n.toggle()" class="lang" [attr.lang]="i18n.lang() === 'he' ? 'en' : 'he'" [attr.aria-label]="i18n.t('switchLanguage')">
+    <mat-icon>translate</mat-icon><span class="label">{{ i18n.t('switchLanguage') }}</span>
   </button>
-  <button mat-flat-button (click)="newTask()">
-    <mat-icon>add</mat-icon>{{ i18n.t('newTask') }}
-  </button>
+  @if (session.me(); as me) {
+    <button mat-icon-button [matMenuTriggerFor]="account" [attr.aria-label]="me.user.name ?? ''">
+      @if (me.user.picture) {
+        <img class="avatar" [src]="me.user.picture" alt="" referrerpolicy="no-referrer" />
+      } @else {
+        <span class="avatar initial">{{ initial() }}</span>
+      }
+    </button>
+    <mat-menu #account="matMenu">
+      <div class="account" mat-menu-item disabled>
+        <span>{{ me.user.demo ? i18n.t('tryDemo') : (me.user.name || me.user.email) }}</span>
+      </div>
+      <button mat-menu-item (click)="session.logout()">
+        <mat-icon>logout</mat-icon>{{ i18n.t('logout') }}
+      </button>
+    </mat-menu>
+  }
 </mat-toolbar>
 
 <main class="page">
-  <div class="week-bar">
-    <div class="nav">
-      <button mat-icon-button (click)="previousWeek()" [attr.aria-label]="i18n.t('previousWeek')"
-              [matTooltip]="i18n.t('previousWeek')">
-        <mat-icon class="flip">chevron_left</mat-icon>
-      </button>
-      <button mat-stroked-button (click)="goToToday()">{{ i18n.t('today') }}</button>
-      <button mat-icon-button (click)="nextWeek()" [attr.aria-label]="i18n.t('nextWeek')"
-              [matTooltip]="i18n.t('nextWeek')">
-        <mat-icon class="flip">chevron_right</mat-icon>
-      </button>
-    </div>
-    <div class="range">
-      <span class="gregorian">{{ rangeLabel().gregorian }}</span>
-      <span class="hebrew">{{ rangeLabel().hebrew }}</span>
-    </div>
-    <mat-chip-listbox class="members" [attr.aria-label]="i18n.t('assignee')"
-                      [value]="memberFilter()" (change)="memberFilter.set($event.value ?? null)">
-      <mat-chip-option [value]="null" [selected]="memberFilter() === null">{{ i18n.t('everyone') }}</mat-chip-option>
-      @for (m of members(); track m.id) {
-        <mat-chip-option [value]="m.id" [style.--chip]="m.color">
-          <span class="chip-dot" [style.background]="m.color"></span>{{ i18n.pick(m) }}
-        </mat-chip-option>
-      }
-    </mat-chip-listbox>
-  </div>
-
-  @if (week.isLoading()) {
-    <mat-progress-bar mode="indeterminate" />
-  }
-
-  @if (week.error()) {
-    <p class="error" role="alert">{{ i18n.t('loadError') }}</p>
-  } @else {
-    <luach-week-view
-      [days]="days()"
-      [members]="members()"
-      [today]="today"
-      (toggleDone)="toggleDone($event)"
-      (openTask)="openTask($event)"
-      (addOnDay)="newTask($event)" />
-  }
-
-  @if (unscheduled().length) {
-    <section class="unscheduled">
-      <h2>{{ i18n.t('unscheduled') }}</h2>
-      <p class="hint">{{ i18n.t('unscheduledHint') }}</p>
-      <ul>
-        @for (task of unscheduled(); track task.id) {
-          <li>
-            <button (click)="openTask(task.id)" [style.--member]="memberColor(task.assigneeId)">
-              <span class="title">{{ task.title }}</span>
-              <span class="meta">
-                <span class="dot"></span>{{ memberName(task.assigneeId) }} ·
-                {{ task.durationMinutes }}′ · {{ i18n.t('deadline') }} {{ task.deadline ? i18n.shortDate(task.deadline) : '' }}
-              </span>
-            </button>
-          </li>
-        }
-      </ul>
-    </section>
-  }
+  <router-outlet />
 </main>

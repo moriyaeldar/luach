@@ -21,6 +21,8 @@ export class WeekView {
   readonly days = input.required<WeekDay[]>();
   readonly members = input.required<Member[]>();
   readonly today = input.required<string>();
+  /** Children can tick off tasks but not add or open them. */
+  readonly canEdit = input(true);
 
   readonly toggleDone = output<Occurrence>();
   readonly openTask = output<string>();
@@ -34,7 +36,7 @@ export class WeekView {
 
   protected memberName(id: string): string {
     const m = this.member(id);
-    return m ? this.i18n.pick(m) : id;
+    return m ? m.displayName : '';
   }
 
   protected timeRange(o: Occurrence): string {

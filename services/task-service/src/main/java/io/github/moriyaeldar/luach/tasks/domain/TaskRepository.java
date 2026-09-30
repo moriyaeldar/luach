@@ -1,6 +1,7 @@
 package io.github.moriyaeldar.luach.tasks.domain;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -14,6 +15,10 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
     Optional<Task> findByIdAndHouseholdId(UUID id, UUID householdId);
 
     List<Task> findByHouseholdIdOrderByCreatedAtDesc(UUID householdId);
+
+    @Modifying
+    @Query("delete from Task t where t.householdId = :household")
+    void deleteByHouseholdId(@Param("household") UUID household);
 
     /** One-off FIXED and DAY tasks dated inside the range. */
     @Query("""

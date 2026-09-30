@@ -1,4 +1,6 @@
-frontend
 **/target
+**/node_modules
+frontend/dist
+frontend/.angular
 .git
-*.md
+.env

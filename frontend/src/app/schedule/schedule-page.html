@@ -1,0 +1,85 @@
+@switch (true) {
+  @case (session.me() === undefined) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+  @case (session.me() === null) {
+    <luach-login-panel />
+  }
+  @case (!session.household()) {
+    <luach-create-family />
+  }
+  @default {
+    @if (session.household()?.demo) {
+      <p class="demo-banner" role="note"><mat-icon>science</mat-icon>{{ i18n.t('demoBanner') }}</p>
+    }
+
+    <div class="week-bar">
+      <div class="nav">
+        <button mat-icon-button (click)="previousWeek()" [attr.aria-label]="i18n.t('previousWeek')"
+                [matTooltip]="i18n.t('previousWeek')">
+          <mat-icon class="flip">chevron_left</mat-icon>
+        </button>
+        <button mat-stroked-button (click)="goToToday()">{{ i18n.t('today') }}</button>
+        <button mat-icon-button (click)="nextWeek()" [attr.aria-label]="i18n.t('nextWeek')"
+                [matTooltip]="i18n.t('nextWeek')">
+          <mat-icon class="flip">chevron_right</mat-icon>
+        </button>
+      </div>
+      <div class="range">
+        <span class="gregorian">{{ rangeLabel().gregorian }}</span>
+        <span class="hebrew">{{ rangeLabel().hebrew }}</span>
+      </div>
+      <mat-chip-listbox class="members" [attr.aria-label]="i18n.t('members')"
+                        [value]="memberFilter()" (change)="memberFilter.set($event.value ?? null)">
+        <mat-chip-option [value]="null" [selected]="memberFilter() === null">{{ i18n.t('everyone') }}</mat-chip-option>
+        @for (m of session.members(); track m.id) {
+          <mat-chip-option [value]="m.id">
+            <span class="chip-dot" [style.background]="m.color"></span>{{ m.displayName }}
+          </mat-chip-option>
+        }
+      </mat-chip-listbox>
+      @if (session.canEdit()) {
+        <button mat-flat-button class="new-task" (click)="newTask()">
+          <mat-icon>add</mat-icon>{{ i18n.t('newTask') }}
+        </button>
+      }
+    </div>
+
+    @if (week.isLoading()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+
+    @if (week.error()) {
+      <p class="error" role="alert">{{ i18n.t('loadError') }}</p>
+    } @else {
+      <luach-week-view
+        [days]="days()"
+        [members]="session.members()"
+        [today]="today"
+        [canEdit]="session.canEdit()"
+        (toggleDone)="toggleDone($event)"
+        (openTask)="openTask($event)"
+        (addOnDay)="newTask($event)" />
+    }
+
+    @if (unscheduled().length) {
+      <section class="unscheduled">
+        <h2>{{ i18n.t('unscheduled') }}</h2>
+        <p class="hint">{{ i18n.t('unscheduledHint') }}</p>
+        <ul>
+          @for (task of unscheduled(); track task.id) {
+            <li>
+              <button (click)="openTask(task.id)" [style.--member]="memberColor(task.assigneeId)">
+                <span class="title">{{ task.title }}</span>
+                <span class="meta">
+                  <span class="dot"></span>{{ memberName(task.assigneeId) }} ·
+                  {{ task.durationMinutes }}′ · {{ i18n.t('deadline') }} {{ task.deadline ? i18n.shortDate(task.deadline) : '' }}
+                </span>
+              </button>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  }
+}

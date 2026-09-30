@@ -3,7 +3,9 @@ import { WeekView } from './week-view';
 import { Member, Occurrence, WeekDay } from '../core/models';
 import { addDays } from '../core/dates';
 
-const members: Member[] = [{ id: 'ima', he: 'אמא', en: 'Mom', color: '#7c3aed' }];
+const members: Member[] = [
+  { id: 'ima', displayName: 'Mom', color: '#7c3aed', role: 'ADMIN', connected: true, email: null },
+];
 
 function occurrence(partial: Partial<Occurrence>): Occurrence {
   return {
