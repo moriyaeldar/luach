@@ -89,6 +89,13 @@ docker compose up --build
 # open http://localhost:8000
 ```
 
+**Free hosting on Render + Neon** (no credit card; both sign in with GitHub):
+
+1. Create a free PostgreSQL database on [Neon](https://neon.tech) and copy its connection string.
+2. On [Render](https://render.com): **New → Blueprint →** this repository. `render.yaml` creates the Task service, the Gateway and the Angular site; paste the Neon string as `DATABASE_URL` when asked.
+
+Free services sleep after 15 minutes without traffic, so the first request after a break takes about a minute.
+
 **On a server** (one command on a fresh Ubuntu machine, e.g. Oracle Cloud Always Free):
 
 ```bash

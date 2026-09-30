@@ -5,7 +5,7 @@ WORKDIR /src
 COPY pom.xml .
 COPY libs libs
 COPY services services
-RUN --mount=type=cache,target=/root/.m2 mvn -B -q -pl ${MODULE} -am package -DskipTests \
+RUN mvn -B -q -pl ${MODULE} -am package -DskipTests \
     && cp ${MODULE}/target/*-SNAPSHOT.jar /app.jar
 
 FROM eclipse-temurin:21-jre-alpine

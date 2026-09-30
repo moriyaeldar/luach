@@ -1,0 +1,53 @@
+# Render Blueprint: free hosting for the demo (Render dashboard -> New -> Blueprint -> this repo).
+# The database is external (Neon, free): paste its connection string as DATABASE_URL when asked.
+# Free services sleep after 15 minutes without traffic; the first request after that takes about a minute.
+services:
+  - type: web
+    name: luach-tasks-moriya
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerContext: .
+    dockerfilePath: ./deploy/java-service.Dockerfile
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: MODULE
+        value: services/task-service
+      - key: DATABASE_URL
+        sync: false
+      - key: JAVA_TOOL_OPTIONS
+        value: -XX:MaxRAMPercentage=50 -XX:+UseSerialGC -Xss512k -XX:TieredStopAtLevel=1
+
+  - type: web
+    name: luach-gateway-moriya
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerContext: .
+    dockerfilePath: ./deploy/java-service.Dockerfile
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: MODULE
+        value: services/gateway
+      # Free services can't receive private-network traffic, so the gateway calls the public URL.
+      - key: TASK_SERVICE_URL
+        value: https://luach-tasks-moriya.onrender.com
+      - key: JAVA_TOOL_OPTIONS
+        value: -XX:MaxRAMPercentage=50 -XX:+UseSerialGC -Xss512k -XX:TieredStopAtLevel=1
+
+  - type: web
+    name: luach-moriya
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npx ng build --configuration production
+    staticPublishPath: dist/frontend/browser
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+    routes:
+      - type: rewrite
+        source: /api/*
+        destination: https://luach-gateway-moriya.onrender.com/api/*
+      - type: rewrite
+        source: /*
+        destination: /index.html
