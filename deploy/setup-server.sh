@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# One-time setup of a fresh Ubuntu server (tested for Oracle Cloud Always Free, ARM / Ampere A1).
+# One-time setup of a fresh Ubuntu server (AWS EC2, Oracle Cloud, or any VPS; x86 or ARM).
 # Installs Docker, opens ports 80/443, clones the repo, writes .env with random passwords and starts Luach.
 #
 #   curl -fsSL https://raw.githubusercontent.com/moriyaeldar/luach/main/deploy/setup-server.sh | bash
@@ -15,10 +15,11 @@ if ! command -v docker >/dev/null; then
 fi
 
 echo "==> Opening ports 80 and 443 in the server firewall"
-# Oracle's Ubuntu images ship iptables rules that reject everything except SSH.
+# Oracle's Ubuntu images ship iptables rules that reject everything except SSH; AWS and most others don't.
+# Either way, the cloud provider's firewall (security list / security group) must allow 80 and 443 too.
 for port in 80 443; do
   if ! sudo iptables -C INPUT -p tcp --dport "$port" -j ACCEPT 2>/dev/null; then
-    sudo iptables -I INPUT 5 -p tcp -m state --state NEW --dport "$port" -j ACCEPT
+    sudo iptables -I INPUT 1 -p tcp -m state --state NEW --dport "$port" -j ACCEPT
   fi
 done
 if command -v netfilter-persistent >/dev/null; then
