@@ -1,0 +1,119 @@
+<h2 mat-dialog-title>{{ i18n.t('familySettings') }}</h2>
+
+<mat-dialog-content class="content">
+  @if (session.isAdmin()) {
+    <section>
+      <h3>{{ i18n.t('familyDetails') }}</h3>
+      <form [formGroup]="details" (ngSubmit)="saveDetails()" class="details">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ i18n.t('familyName') }}</mat-label>
+          <input matInput formControlName="name" />
+        </mat-form-field>
+        <mat-checkbox formControlName="inIsrael">{{ i18n.t('inIsrael') }}</mat-checkbox>
+        <button mat-stroked-button type="submit" [disabled]="details.invalid || details.pristine">{{ i18n.t('save') }}</button>
+      </form>
+    </section>
+  }
+
+  <section>
+    <h3>{{ i18n.t('members') }}</h3>
+    <p class="hint">{{ i18n.t('roleHint') }}</p>
+    <ul class="members">
+      @for (m of session.members(); track m.id) {
+        <li>
+          @if (session.isAdmin()) {
+            <mat-select class="color" [value]="m.color" (selectionChange)="changeColor(m, $event.value)"
+                        [attr.aria-label]="i18n.t('name') + ' ' + m.displayName">
+              <mat-select-trigger><span class="dot" [style.background]="m.color"></span></mat-select-trigger>
+              @for (c of colors; track c) {
+                <mat-option [value]="c"><span class="dot" [style.background]="c"></span></mat-option>
+              }
+            </mat-select>
+          } @else {
+            <span class="dot" [style.background]="m.color"></span>
+          }
+          <div class="who">
+            <span class="name">{{ m.displayName }}</span>
+            <span class="status">
+              @if (m.connected) {
+                <mat-icon inline>verified_user</mat-icon>{{ m.email || i18n.t('connected') }}
+              } @else {
+                {{ i18n.t('notConnected') }}
+              }
+            </span>
+          </div>
+          @if (session.isAdmin()) {
+            <mat-select class="role" [value]="m.role" (selectionChange)="changeRole(m, $event.value)">
+              @for (r of roles; track r) {
+                <mat-option [value]="r">{{ roleName(r) }}</mat-option>
+              }
+            </mat-select>
+            @if (!m.connected) {
+              <button mat-icon-button (click)="inviteMember(m)" [matTooltip]="i18n.t('invite')"
+                      [attr.aria-label]="i18n.t('invite') + ' ' + m.displayName">
+                <mat-icon>person_add</mat-icon>
+              </button>
+            }
+            <button mat-icon-button (click)="remove(m)" [matTooltip]="i18n.t('remove')"
+                    [attr.aria-label]="i18n.t('remove') + ' ' + m.displayName">
+              <mat-icon>delete_outline</mat-icon>
+            </button>
+          } @else {
+            <span class="role-text">{{ roleName(m.role) }}</span>
+          }
+        </li>
+      }
+    </ul>
+  </section>
+
+  @if (invite(); as link) {
+    <section class="invite" aria-live="polite">
+      <h3>{{ i18n.t('inviteLinkFor') }} {{ link.forName }}</h3>
+      <div class="link-row">
+        <input class="link" [value]="link.url" readonly dir="ltr" (focus)="$any($event.target).select()" />
+        <button mat-stroked-button (click)="copy(link.url)">
+          <mat-icon>{{ copied() ? 'check' : 'content_copy' }}</mat-icon>{{ copied() ? i18n.t('copied') : i18n.t('copy') }}
+        </button>
+        <a mat-flat-button class="whatsapp" [href]="whatsAppUrl(link.url)" target="_blank" rel="noopener">
+          <mat-icon>send</mat-icon>{{ i18n.t('shareWhatsApp') }}
+        </a>
+      </div>
+      <p class="hint">{{ i18n.t('inviteLinkHint') }}</p>
+    </section>
+  }
+
+  @if (session.isAdmin()) {
+    <section>
+      <h3>{{ i18n.t('addMember') }}</h3>
+      <p class="hint">{{ i18n.t('addMemberHint') }}</p>
+      <form [formGroup]="newMember" (ngSubmit)="addMember()" class="add">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ i18n.t('name') }}</mat-label>
+          <input matInput formControlName="displayName" autocomplete="off" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ i18n.t('role') }}</mat-label>
+          <mat-select formControlName="role">
+            @for (r of roles; track r) {
+              <mat-option [value]="r">{{ roleName(r) }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <div class="add-actions">
+          <button mat-flat-button type="submit" [disabled]="newMember.invalid">{{ i18n.t('add') }}</button>
+          <button mat-stroked-button type="button" (click)="inviteNew()">
+            <mat-icon>link</mat-icon>{{ i18n.t('inviteNew') }}
+          </button>
+        </div>
+      </form>
+    </section>
+  }
+
+  @if (error(); as message) {
+    <p class="error" role="alert">{{ message }}</p>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>{{ i18n.t('close') }}</button>
+</mat-dialog-actions>

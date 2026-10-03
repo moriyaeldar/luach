@@ -20,6 +20,9 @@
 
   <modules>
     <module>libs/hebrew-calendar</module>
+    <module>libs/household-events</module>
+    <module>libs/service-config</module>
+    <module>services/household-service</module>
     <module>services/task-service</module>
     <module>services/gateway</module>
   </modules>
@@ -43,6 +46,16 @@
       <dependency>
         <groupId>io.github.moriyaeldar.luach</groupId>
         <artifactId>hebrew-calendar</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.github.moriyaeldar.luach</groupId>
+        <artifactId>household-events</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.github.moriyaeldar.luach</groupId>
+        <artifactId>service-config</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

@@ -9,10 +9,12 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 @RestController
 public class WeekController {
@@ -25,13 +27,15 @@ public class WeekController {
 
     /** Seven days starting at {@code start} (the client decides where a week starts, usually Sunday). */
     @GetMapping("/api/week")
-    public WeekResponse week(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start) {
-        return service.week(start);
+    public WeekResponse week(@RequestHeader(TaskController.HOUSEHOLD) UUID household,
+                             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start) {
+        return service.week(household, start);
     }
 
     /** The next occurrences of a rule, so users can see what a Hebrew date means in coming years. */
     @PostMapping("/api/recurrence/preview")
-    public PreviewResponse preview(@Valid @RequestBody PreviewRequest request) {
-        return service.preview(request);
+    public PreviewResponse preview(@RequestHeader(TaskController.HOUSEHOLD) UUID household,
+                                   @Valid @RequestBody PreviewRequest request) {
+        return service.preview(household, request);
     }
 }

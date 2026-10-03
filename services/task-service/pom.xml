@@ -12,7 +12,7 @@
 
   <artifactId>task-service</artifactId>
   <name>Luach :: Task service</name>
-  <description>Tasks, recurrence rules and the weekly schedule view</description>
+  <description>Tasks, recurrence rules and the weekly schedule view. Keeps a local copy of families from Kafka events.</description>
 
   <dependencies>
     <dependency>
@@ -20,8 +20,28 @@
       <artifactId>hebrew-calendar</artifactId>
     </dependency>
     <dependency>
+      <groupId>io.github.moriyaeldar.luach</groupId>
+      <artifactId>household-events</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.github.moriyaeldar.luach</groupId>
+      <artifactId>service-config</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-webmvc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-security-oauth2-resource-server</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-kafka</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-restclient</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -61,6 +81,16 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-data-jpa-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-security-oauth2-resource-server-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-kafka-test</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>

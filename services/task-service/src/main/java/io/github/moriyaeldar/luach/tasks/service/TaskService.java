@@ -1,6 +1,5 @@
 package io.github.moriyaeldar.luach.tasks.service;
 
-import io.github.moriyaeldar.luach.tasks.LuachProperties;
 import io.github.moriyaeldar.luach.tasks.api.CompletionRequest;
 import io.github.moriyaeldar.luach.tasks.api.RecurrenceDto;
 import io.github.moriyaeldar.luach.tasks.api.TaskRequest;
@@ -12,6 +11,10 @@ import io.github.moriyaeldar.luach.tasks.domain.TaskCompletion;
 import io.github.moriyaeldar.luach.tasks.domain.TaskCompletionRepository;
 import io.github.moriyaeldar.luach.tasks.domain.TaskRepository;
 import io.github.moriyaeldar.luach.tasks.domain.TaskStatus;
+import io.github.moriyaeldar.luach.tasks.household.HouseholdAccess;
+import io.github.moriyaeldar.luach.tasks.household.HouseholdAccess.Access;
+import io.github.moriyaeldar.luach.tasks.household.HouseholdAccess.Permission;
+import io.github.moriyaeldar.luach.tasks.household.MemberReplica;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,42 +27,52 @@ public class TaskService {
 
     private final TaskRepository tasks;
     private final TaskCompletionRepository completions;
-    private final UUID householdId;
+    private final HouseholdAccess access;
 
-    public TaskService(TaskRepository tasks, TaskCompletionRepository completions, LuachProperties properties) {
+    public TaskService(TaskRepository tasks, TaskCompletionRepository completions, HouseholdAccess access) {
         this.tasks = tasks;
         this.completions = completions;
-        this.householdId = properties.household().id();
+        this.access = access;
     }
 
     @Transactional(readOnly = true)
-    public List<TaskResponse> list() {
+    public List<TaskResponse> list(UUID householdId) {
+        access.require(householdId, Permission.READ);
         return tasks.findByHouseholdIdOrderByCreatedAtDesc(householdId).stream().map(TaskService::toResponse).toList();
     }
 
     @Transactional(readOnly = true)
-    public TaskResponse get(UUID id) {
-        return toResponse(find(id));
+    public TaskResponse get(UUID householdId, UUID id) {
+        access.require(householdId, Permission.READ);
+        return toResponse(find(householdId, id));
     }
 
-    public TaskResponse create(TaskRequest request) {
+    public TaskResponse create(UUID householdId, TaskRequest request) {
+        Access a = access.require(householdId, Permission.EDIT);
         Task task = new Task(householdId);
-        apply(task, request);
+        apply(task, request, a);
         return toResponse(tasks.save(task));
     }
 
-    public TaskResponse update(UUID id, TaskRequest request) {
-        Task task = find(id);
-        apply(task, request);
+    public TaskResponse update(UUID householdId, UUID id, TaskRequest request) {
+        Access a = access.require(householdId, Permission.EDIT);
+        Task task = find(householdId, id);
+        apply(task, request, a);
         return toResponse(task);
     }
 
-    public void delete(UUID id) {
-        tasks.delete(find(id));
+    public void delete(UUID householdId, UUID id) {
+        access.require(householdId, Permission.EDIT);
+        tasks.delete(find(householdId, id));
     }
 
-    public TaskResponse setCompletion(UUID id, CompletionRequest request) {
-        Task task = find(id);
+    /** Anyone in the family can tick off a task; children only their own. */
+    public TaskResponse setCompletion(UUID householdId, UUID id, CompletionRequest request) {
+        Access a = access.require(householdId, Permission.READ);
+        Task task = find(householdId, id);
+        if (a.isChild() && !task.getAssigneeId().equals(a.member().getId().toString())) {
+            throw new HouseholdAccess.ForbiddenException("Children can only tick off their own tasks");
+        }
         if (!task.isRecurring()) {
             task.markStatus(request.done() ? TaskStatus.DONE : TaskStatus.OPEN);
             return toResponse(task);
@@ -78,12 +91,17 @@ public class TaskService {
         return toResponse(task);
     }
 
-    private Task find(UUID id) {
+    private Task find(UUID householdId, UUID id) {
         return tasks.findByIdAndHouseholdId(id, householdId).orElseThrow(() -> new TaskNotFoundException(id));
     }
 
-    private static void apply(Task task, TaskRequest r) {
+    private static void apply(Task task, TaskRequest r, Access access) {
         validate(r);
+        boolean knownMember = access.household().getMembers().stream()
+                .map(MemberReplica::getId).anyMatch(id -> id.toString().equals(r.assigneeId()));
+        if (!knownMember) {
+            throw new InvalidTaskException("The task must be assigned to a member of this family");
+        }
         Recurrence recurrence = RecurrenceMapper.toEntity(r.recurrence());
         boolean fixed = r.scheduleMode() == ScheduleMode.FIXED;
         task.update(r.title().strip(), r.notes(), r.assigneeId(), r.scheduleMode(),

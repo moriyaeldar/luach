@@ -3,7 +3,6 @@ package io.github.moriyaeldar.luach.tasks.service;
 import io.github.moriyaeldar.luach.calendar.HebrewCalendar;
 import io.github.moriyaeldar.luach.calendar.RecurrenceEngine;
 import io.github.moriyaeldar.luach.calendar.RecurrenceRule;
-import io.github.moriyaeldar.luach.tasks.LuachProperties;
 import io.github.moriyaeldar.luach.tasks.api.Occurrence;
 import io.github.moriyaeldar.luach.tasks.api.PreviewRequest;
 import io.github.moriyaeldar.luach.tasks.api.PreviewResponse;
@@ -14,6 +13,8 @@ import io.github.moriyaeldar.luach.tasks.domain.TaskCompletion;
 import io.github.moriyaeldar.luach.tasks.domain.TaskCompletionRepository;
 import io.github.moriyaeldar.luach.tasks.domain.TaskRepository;
 import io.github.moriyaeldar.luach.tasks.domain.TaskStatus;
+import io.github.moriyaeldar.luach.tasks.household.HouseholdAccess;
+import io.github.moriyaeldar.luach.tasks.household.HouseholdAccess.Permission;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,17 +46,17 @@ public class WeekService {
     private final TaskRepository tasks;
     private final TaskCompletionRepository completions;
     private final RecurrenceEngine engine = new RecurrenceEngine();
-    private final HebrewCalendar calendar;
-    private final UUID householdId;
+    private final HouseholdAccess access;
 
-    public WeekService(TaskRepository tasks, TaskCompletionRepository completions, LuachProperties properties) {
+    public WeekService(TaskRepository tasks, TaskCompletionRepository completions, HouseholdAccess access) {
         this.tasks = tasks;
         this.completions = completions;
-        this.calendar = new HebrewCalendar(properties.household().inIsrael());
-        this.householdId = properties.household().id();
+        this.access = access;
     }
 
-    public WeekResponse week(LocalDate start) {
+    public WeekResponse week(UUID householdId, LocalDate start) {
+        var household = access.require(householdId, Permission.READ).household();
+        HebrewCalendar calendar = new HebrewCalendar(household.isInIsrael());
         LocalDate end = start.plusDays(6);
         Map<LocalDate, List<Occurrence>> byDay = new HashMap<>();
 
@@ -92,7 +93,8 @@ public class WeekService {
         return new WeekResponse(start, days, unscheduled);
     }
 
-    public PreviewResponse preview(PreviewRequest request) {
+    public PreviewResponse preview(UUID householdId, PreviewRequest request) {
+        HebrewCalendar calendar = new HebrewCalendar(access.require(householdId, Permission.READ).household().isInIsrael());
         RecurrenceRule rule = RecurrenceMapper.toRule(request.recurrence());
         int count = request.count() == null ? 5 : request.count();
         LocalDate to = request.from().plusYears(rule instanceof RecurrenceRule.HebrewYearly ? count + 1L : 3L);

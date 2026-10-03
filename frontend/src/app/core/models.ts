@@ -89,12 +89,54 @@ export interface WeekResponse {
   unscheduled: Task[];
 }
 
+export type Role = 'ADMIN' | 'MEMBER' | 'CHILD';
+
 export interface Member {
   id: string;
-  he: string;
-  en: string;
+  displayName: string;
   color: string;
+  role: Role;
+  /** Whether a login account is connected to this member. */
+  connected: boolean;
+  email: string | null;
 }
+
+export interface User {
+  id: string;
+  name: string | null;
+  email: string | null;
+  picture: string | null;
+  demo: boolean;
+}
+
+/** A family the current user belongs to, with their own member id and role in it. */
+export interface Membership {
+  id: string;
+  name: string;
+  inIsrael: boolean;
+  demo: boolean;
+  memberId: string;
+  role: Role;
+}
+
+export interface Me {
+  user: User;
+  households: Membership[];
+}
+
+export interface AuthConfig {
+  googleEnabled: boolean;
+  googleLoginUrl: string;
+}
+
+export interface InvitePreview {
+  householdName: string;
+  displayName: string | null;
+  role: Role;
+  status: 'VALID' | 'USED' | 'EXPIRED';
+}
+
+export const MEMBER_COLORS = ['#7c3aed', '#0891b2', '#db2777', '#ea580c', '#16a34a', '#ca8a04', '#4f46e5', '#dc2626'];
 
 export interface PreviewItem {
   date: string;

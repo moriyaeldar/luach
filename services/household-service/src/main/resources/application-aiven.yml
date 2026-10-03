@@ -1,0 +1,11 @@
+# Managed Kafka on Aiven (client-certificate authentication). Activate with SPRING_PROFILES_ACTIVE=aiven.
+spring:
+  kafka:
+    security:
+      protocol: SSL
+    properties:
+      ssl.truststore.type: PEM
+      ssl.truststore.certificates: ${KAFKA_CA_CERT:}
+      ssl.keystore.type: PEM
+      ssl.keystore.certificate.chain: ${KAFKA_ACCESS_CERT:}
+      ssl.keystore.key: ${KAFKA_ACCESS_KEY:}

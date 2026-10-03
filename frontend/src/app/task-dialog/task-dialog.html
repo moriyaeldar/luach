@@ -16,7 +16,7 @@
         <mat-select formControlName="assigneeId">
           @for (m of data.members; track m.id) {
             <mat-option [value]="m.id">
-              <span class="member-dot" [style.background]="m.color"></span>{{ i18n.pick(m) }}
+              <span class="member-dot" [style.background]="m.color"></span>{{ m.displayName }}
             </mat-option>
           }
         </mat-select>

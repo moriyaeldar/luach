@@ -4,15 +4,24 @@
 services:
   postgres:
     restart: unless-stopped
+  kafka:
+    restart: unless-stopped
+  household-service:
+    restart: unless-stopped
+    environment:
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required in production}
+      JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=40
   task-service:
     restart: unless-stopped
     environment:
-      JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=60
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required in production}
+      JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=40
   gateway:
     restart: unless-stopped
-  frontend:
-    restart: unless-stopped
     ports: !reset []
+    environment:
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required in production}
+      COOKIE_SECURE: "true"
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
@@ -26,7 +35,7 @@ services:
       - caddy-data:/data
       - caddy-config:/config
     depends_on:
-      - frontend
+      - gateway
 
 volumes:
   caddy-data:

@@ -13,4 +13,4 @@ SQL
 }
 
 create_service_db tasks "${TASKS_DB_PASSWORD:?TASKS_DB_PASSWORD is required}"
-# Milestone 2+: household, scheduler, sync, notifications
+create_service_db households "${HOUSEHOLDS_DB_PASSWORD:?HOUSEHOLDS_DB_PASSWORD is required}"

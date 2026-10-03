@@ -1,6 +1,9 @@
 # Runs the whole system locally: docker compose up --build  ->  http://localhost:8000
 name: luach
 
+x-jwt: &jwt
+  JWT_SECRET: ${JWT_SECRET:-local-development-secret-change-me-0123456789}
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -8,6 +11,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       TASKS_DB_PASSWORD: ${TASKS_DB_PASSWORD:-tasks}
+      HOUSEHOLDS_DB_PASSWORD: ${HOUSEHOLDS_DB_PASSWORD:-households}
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./deploy/postgres/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh:ro
@@ -16,6 +20,40 @@ services:
       interval: 5s
       retries: 10
 
+  # Single-node Kafka in KRaft mode (no ZooKeeper). Carries household events to the other services.
+  kafka:
+    image: apache/kafka:4.1.0
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+
+  household-service:
+    build:
+      context: .
+      dockerfile: deploy/java-service.Dockerfile
+      args:
+        MODULE: services/household-service
+    environment:
+      <<: *jwt
+      DB_URL: jdbc:postgresql://postgres:5432/households_db
+      DB_USER: households
+      DB_PASSWORD: ${HOUSEHOLDS_DB_PASSWORD:-households}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+
   task-service:
     build:
       context: .
@@ -23,30 +61,37 @@ services:
       args:
         MODULE: services/task-service
     environment:
+      <<: *jwt
       DB_URL: jdbc:postgresql://postgres:5432/tasks_db
       DB_USER: tasks
       DB_PASSWORD: ${TASKS_DB_PASSWORD:-tasks}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      HOUSEHOLD_SERVICE_URL: http://household-service:8082
     depends_on:
       postgres:
         condition: service_healthy
+      kafka:
+        condition: service_started
 
+  # The only public entry point: serves the Angular app, owns the session cookie, routes /api/**.
   gateway:
     build:
       context: .
-      dockerfile: deploy/java-service.Dockerfile
-      args:
-        MODULE: services/gateway
+      dockerfile: deploy/gateway.Dockerfile
     environment:
+      <<: *jwt
       TASK_SERVICE_URL: http://task-service:8081
-    depends_on:
-      - task-service
-
-  frontend:
-    build: ./frontend
+      HOUSEHOLD_SERVICE_URL: http://household-service:8082
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      # Plain http on localhost; production (docker-compose.prod.yml, Render) keeps Secure cookies.
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
     ports:
-      - "8000:80"
+      - "8000:8080"
     depends_on:
-      - gateway
+      - household-service
+      - task-service
 
 volumes:
   postgres-data:
+  kafka-data:

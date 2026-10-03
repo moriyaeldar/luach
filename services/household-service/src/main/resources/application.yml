@@ -1,0 +1,44 @@
+spring:
+  application:
+    name: household-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/households_db}
+    username: ${DB_USER:households}
+    password: ${DB_PASSWORD:households}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      properties:
+        # Fail fast when Kafka is unreachable; the outbox keeps the event and retries later.
+        max.block.ms: 5000
+        request.timeout.ms: 5000
+        delivery.timeout.ms: 10000
+
+server:
+  port: ${PORT:8082}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+springdoc:
+  api-docs:
+    path: /api/households-docs
+
+luach:
+  jwt-secret: ${JWT_SECRET:local-development-secret-change-me-0123456789}
+  kafka:
+    enabled: ${KAFKA_ENABLED:true}
+  outbox:
+    poll-ms: 1000
+  demo:
+    ttl: 24h

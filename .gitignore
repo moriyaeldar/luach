@@ -17,3 +17,6 @@ dist/
 .vscode/*
 !frontend/.vscode/extensions.json
 .DS_Store
+
+# Built Angular app, copied in by deploy/gateway.Dockerfile (or by hand for a local run)
+services/gateway/src/main/resources/static/
